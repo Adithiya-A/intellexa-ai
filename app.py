@@ -161,11 +161,17 @@ async def upload(request: Request, file: UploadFile = File(...)):
             uid = decoded.get("uid")
             upsert_user(decoded)
     except ValueError as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        # Don't block ingestion if auth fails (frontend can still upload).
+        # We'll store as anonymous and surface the error in the response.
+        decoded = None
+        uid = None
+        auth_error = str(e)
 
     upload_id = ""
     storage_info: Dict[str, Any] = {"enabled": False, "bucket": None, "path": None}
     supabase_errors: Dict[str, Any] = {}
+    if "auth_error" in locals():
+        supabase_errors["auth_error"] = auth_error
 
     with tempfile.TemporaryDirectory() as tmpdir:
         file_path = os.path.join(tmpdir, file.filename)
@@ -233,7 +239,8 @@ def ask(request: Request, payload: AskRequest):
             uid = decoded.get("uid")
             upsert_user(decoded)
     except ValueError as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        decoded = None
+        uid = None
 
     result = run_pipeline(payload.query, top_k=payload.top_k)
     try:
