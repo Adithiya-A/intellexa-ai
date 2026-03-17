@@ -3,77 +3,443 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Intellexa AI Multi-Agent RAG</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <title>Intellexa AI — Data Ingestion Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui"] },
+            colors: {
+              brand: {
+                50: "#EEF2FF",
+                100: "#E0E7FF",
+                500: "#6366F1",
+                600: "#4F46E5",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      html,
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial;
+      }
+    </style>
   </head>
-  <body>
-    <main class="container">
-      <header class="header">
+
+  <body class="bg-slate-50 text-slate-900">
+    <!-- Top Nav -->
+    <nav class="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
+      <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
+        <div class="flex items-center gap-3">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+            <i class="ph-fill ph-database text-lg"></i>
+          </div>
+          <div class="text-base font-semibold tracking-tight">
+            <span>RAG</span><span class="font-normal text-slate-600">Admin</span>
+          </div>
+        </div>
+
+        <div class="ml-auto flex items-center gap-2 sm:gap-3">
+          <a
+            id="signInBtn"
+            href="/static/auth.html"
+            class="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:inline-flex"
+            title="Authentication"
+          >
+            <i class="ph ph-sign-in text-base"></i>
+            Sign in
+          </a>
+          
+          <div
+            id="healthPill"
+            class="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 sm:flex"
+          >
+            <span class="inline-block h-2 w-2 rounded-full bg-slate-300" id="healthDot"></span>
+            <span id="healthText">Checking…</span>
+          </div>
+
+          <button
+            class="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100"
+            type="button"
+            aria-label="Notifications"
+          >
+            <i class="ph ph-bell text-lg"></i>
+            <span
+              class="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white"
+            ></span>
+          </button>
+          <a
+            id="profileBtn"
+            href="/static/profile.html"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-brand-600 hover:bg-brand-50"
+            aria-label="Profile"
+            title="Profile"
+          >
+            <i class="ph-fill ph-user text-base"></i>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-8">
+      <!-- Header -->
+      <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1>Multi-Agent RAG (Fast Demo)</h1>
-          <p class="subtle">
-            Upload a document, then ask questions grounded in retrieved chunks.
+          <h1 class="text-xl font-bold tracking-tight sm:text-2xl">Data Ingestion Dashboard</h1>
+          <p class="mt-1 text-sm text-slate-600">
+            Manage and monitor document processing for your Knowledge Base.
           </p>
         </div>
-        <div class="pill" id="healthPill">Checking…</div>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            id="sourceSettingsBtn"
+            type="button"
+            class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:w-auto"
+          >
+            Source Settings
+          </button>
+        </div>
       </header>
 
-      <section class="card">
-        <h2>1) Upload Document</h2>
-        <div class="row">
-          <input id="pdf" type="file" accept=".pdf,.docx,.json,.txt,.md,application/pdf,application/json" />
-          <button id="uploadBtn">Upload & Index</button>
-        </div>
-        <div class="subtle" id="uploadStatus"></div>
-      </section>
-
-      <section class="card">
-        <h2>2) Ask</h2>
-        <div class="row">
-          <input id="query" type="text" placeholder="Ask something about the uploaded document…" />
-          <button id="askBtn">Ask</button>
-        </div>
-        <div class="row">
-          <label class="subtle">Top K</label>
-          <input id="topK" type="number" min="1" max="10" value="3" class="topk" />
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>Result</h2>
-        <div class="flow" id="flow">[Planner] → [Retriever] → [Analyzer] → [Validator] → [Responder]</div>
-        <div class="metrics">
-          <div class="metric">
-            <div class="label">Confidence</div>
-            <div class="value" id="confidence">—</div>
+      <!-- Status Cards -->
+      <section class="mt-5 grid grid-cols-1 gap-4 sm:mt-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Total Documents
           </div>
-          <div class="metric">
-            <div class="label">Warning</div>
-            <div class="value warn" id="warning">—</div>
+          <div class="mt-2 text-3xl font-bold tracking-tight" id="totalDocs">0</div>
+          <div class="mt-3 flex items-center gap-2 text-sm font-medium text-emerald-600">
+            <span class="h-2 w-2 rounded-full bg-emerald-600"></span>
+            <span id="docsDelta">Ready</span>
           </div>
         </div>
-        <pre class="answer" id="answer">Upload a document to begin.</pre>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Processing</div>
+          <div class="mt-2 text-3xl font-bold tracking-tight" id="processingState">Idle</div>
+          <div class="mt-3 flex items-center gap-2 text-sm font-medium text-brand-600">
+            <span class="h-2 w-2 rounded-full bg-brand-500"></span>
+            <span id="processingHint">No active jobs</span>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Storage Used
+          </div>
+          <div class="mt-2 text-3xl font-bold tracking-tight" id="storageUsed">—</div>
+          <div class="mt-4">
+            <div class="h-2 w-full rounded-full bg-slate-100">
+              <div id="storageBar" class="h-2 rounded-full bg-brand-500" style="width: 10%"></div>
+            </div>
+            <div class="mt-2 text-xs text-slate-500" id="storageHint">Local index under `data/`</div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Confidence</div>
+          <div class="mt-2 text-3xl font-bold tracking-tight" id="confidenceCard">—</div>
+          <div class="mt-3 text-sm text-slate-600" id="confidenceHint">Ask a question to compute.</div>
+        </div>
       </section>
 
-      <section class="grid">
-        <section class="card">
-          <h2>Retrieved Chunks</h2>
-          <div class="subtle">These are the exact chunks sent to the Analyzer Agent.</div>
-          <div id="chunks" class="stack"></div>
-        </section>
-        <section class="card">
-          <h2>Sources</h2>
-          <div class="subtle">Chunk metadata used for attribution.</div>
-          <pre class="json" id="sources">[]</pre>
-        </section>
-      </section>
+      <!-- Content Grid -->
+      <section class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <!-- Left: Documents -->
+        <section class="lg:col-span-7">
+          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-200 px-4 py-4 sm:px-5">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center justify-between gap-3">
+                  <div id="tabsRow" class="flex items-center gap-3 overflow-x-auto">
+                  <button
+                    class="tab-btn text-sm font-semibold text-brand-600"
+                    data-tab="all"
+                    type="button"
+                  >
+                    All Docs
+                  </button>
+                  <button
+                    class="tab-btn text-sm font-semibold text-slate-500 hover:text-slate-700"
+                    data-tab="pdf"
+                    type="button"
+                  >
+                    PDFs
+                  </button>
+                  <button
+                    class="tab-btn text-sm font-semibold text-slate-500 hover:text-slate-700"
+                    data-tab="markdown"
+                    type="button"
+                  >
+                    Markdown
+                  </button>
+                  </div>
+                  
+                </div>
 
-      <section class="card">
-        <h2>Agent Trace</h2>
-        <div class="subtle">Quick visibility into each agent’s output.</div>
-        <pre class="json" id="trace">[]</pre>
+                <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+                  <div class="flex w-full items-center gap-2 sm:w-[420px]">
+                    <div class="relative w-full">
+                      <span
+                        class="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center text-slate-400"
+                      >
+                        <i class="ph ph-magnifying-glass text-base"></i>
+                      </span>
+                      <input
+                        id="docsSearch"
+                        type="search"
+                        placeholder="Search ingested documents…"
+                        list="docsSearchList"
+                        class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-10 text-sm text-slate-900 shadow-sm outline-none ring-brand-500 focus:ring-2"
+                        autocomplete="off"
+                      />
+                      <button
+                        id="docsSearchClear"
+                        type="button"
+                        class="absolute inset-y-0 right-2 hidden items-center justify-center rounded-lg px-2 text-slate-500 hover:bg-slate-100"
+                        aria-label="Clear search"
+                      >
+                        <i class="ph ph-x text-base"></i>
+                      </button>
+                      <datalist id="docsSearchList"></datalist>
+                    </div>
+
+                    <button
+                      id="filterBtn"
+                      type="button"
+                      class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+                      aria-label="Filter"
+                      title="Filter"
+                    >
+                      <i class="ph ph-funnel text-lg"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-2 h-0.5 w-16 rounded bg-brand-500" id="tabUnderline"></div>
+            </div>
+
+            <div class="p-4 sm:p-5">
+              <div class="max-h-[420px] overflow-x-auto overflow-y-auto">
+                <table class="min-w-[920px] text-left text-sm sm:min-w-full">
+                  <thead class="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th class="pb-3 pr-6 font-bold">Document Name</th>
+                      <th class="pb-3 pr-6 font-bold">Status</th>
+                      <th class="pb-3 pr-6 font-bold">Size / Type</th>
+                      <th class="pb-3 pr-6 font-bold">Date Added</th>
+                      <th class="pb-3 pr-0 text-right font-bold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100" id="docsTableBody"></tbody>
+                </table>
+              </div>
+
+              <div class="mt-4 text-sm text-slate-500" id="docsEmptyState">
+                Upload your first document to see it here.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right: Ask + Result -->
+        <section class="lg:col-span-5">
+          <div class="space-y-4">
+            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div class="border-b border-slate-200 px-4 py-3 text-sm text-slate-500">
+                Ask a question about your enterprise data…
+              </div>
+              <div class="px-4 py-3">
+                <textarea
+                  id="query"
+                  rows="3"
+                  class="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none ring-brand-500 focus:ring-2"
+                  placeholder="Type your question…"
+                ></textarea>
+                <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex items-center gap-2 text-slate-500">
+                    <input
+                      id="chatFileInput"
+                      type="file"
+                      class="hidden"
+                      accept=".pdf,.docx,.json,.txt,.md,application/pdf,application/json"
+                    />
+                    <button
+                      id="chatUploadBtn"
+                      type="button"
+                      class="inline-flex h-10 w-10 items-center justify-center rounded-xl hover:bg-slate-100"
+                      aria-label="Upload document"
+                      title="Upload document"
+                    >
+                      <i class="ph ph-paperclip text-xl"></i>
+                    </button>
+                    <button
+                      id="composerDocsBtn"
+                      type="button"
+                      class="inline-flex h-10 w-10 items-center justify-center rounded-xl hover:bg-slate-100"
+                      aria-label="Documents"
+                      title="Documents"
+                    >
+                      <i class="ph-fill ph-database text-xl"></i>
+                    </button>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <label class="text-xs font-semibold text-slate-600">Top K</label>
+                    <input
+                      id="topK"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value="3"
+                      class="w-24 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none ring-brand-500 focus:ring-2"
+                    />
+                    <button
+                      id="askBtn"
+                      type="button"
+                      class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-600 sm:w-auto"
+                    >
+                      Send Query
+                      <i class="ph ph-arrow-right text-base"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <h2 class="text-sm font-bold tracking-tight text-slate-900">Result</h2>
+                  <div class="mt-1 text-xs text-slate-500" id="flow">
+                    [Planner] → [Retriever] → [Analyzer] → [Validator] → [Responder]
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Confidence
+                  </div>
+                  <div class="mt-1 text-lg font-bold text-slate-900" id="confidence">—</div>
+                </div>
+              </div>
+
+              <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                <span class="font-semibold text-slate-900">Warning:</span>
+                <span id="warning">—</span>
+              </div>
+
+              <div
+                class="mt-3 min-h-[120px] whitespace-pre-wrap rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900"
+                id="answer"
+              >
+                Upload a document to begin.
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 class="text-sm font-bold tracking-tight text-slate-900">Retrieved Chunks</h2>
+              <p class="mt-1 text-xs text-slate-500">Exact chunks sent to the Analyzer Agent.</p>
+              <div class="mt-3 max-h-[420px] space-y-3 overflow-auto" id="chunks"></div>
+            </div>
+
+            <details class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <summary class="cursor-pointer text-sm font-bold tracking-tight text-slate-900">
+                Sources & Agent Trace
+              </summary>
+              <div class="mt-4 grid grid-cols-1 gap-4">
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Sources
+                  </div>
+                  <pre
+                    class="mt-2 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800"
+                    id="sources"
+                  >
+[]</pre
+                  >
+                </div>
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Agent Trace
+                  </div>
+                  <pre
+                    class="mt-2 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800"
+                    id="trace"
+                  >
+[]</pre
+                  >
+                </div>
+              </div>
+            </details>
+          </div>
+        </section>
       </section>
     </main>
+
+    <!-- Upload Modal -->
+    <div
+      id="uploadModal"
+      class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/40 p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+        <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <div>
+            <div class="text-sm font-bold text-slate-900">Upload Document</div>
+            <div class="mt-1 text-xs text-slate-500">PDF, DOCX, JSON, TXT, or MD.</div>
+          </div>
+          <button
+            id="closeUploadBtn"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100"
+            type="button"
+            aria-label="Close"
+          >
+            <i class="ph ph-x text-lg"></i>
+          </button>
+        </div>
+
+        <div class="px-5 py-4">
+          <input
+            id="fileInput"
+            type="file"
+            accept=".pdf,.docx,.json,.txt,.md,application/pdf,application/json"
+            class="block w-full text-sm text-slate-700 file:mr-4 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+          />
+          <div class="mt-3 text-sm text-slate-600" id="uploadStatus"></div>
+        </div>
+
+        <div class="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:justify-end">
+          <button
+            id="cancelUploadBtn"
+            type="button"
+            class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto"
+          >
+            Cancel
+          </button>
+          <button
+            id="uploadBtn"
+            type="button"
+            class="inline-flex w-full items-center justify-center rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 sm:w-auto"
+          >
+            Upload & Index
+          </button>
+        </div>
+      </div>
+    </div>
 
     <script src="/static/app.js"></script>
   </body>
