@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Intellexa AI — Authentication</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui"] },
+            colors: {
+              brand: {
+                50: "#EEF2FF",
+                100: "#E0E7FF",
+                500: "#6366F1",
+                600: "#4F46E5",
+              },
+            },
+            keyframes: {
+              floaty: {
+                "0%,100%": { transform: "translateY(0px)" },
+                "50%": { transform: "translateY(-10px)" },
+              },
+              blink: {
+                "0%,46%,50%,100%": { transform: "scaleY(1)" },
+                "48%": { transform: "scaleY(0.1)" },
+              },
+              scan: {
+                "0%": { transform: "translateX(-120%)", opacity: 0 },
+                "10%": { opacity: 0.9 },
+                "50%": { opacity: 0.65 },
+                "90%": { opacity: 0.9 },
+                "100%": { transform: "translateX(120%)", opacity: 0 },
+              },
+              shimmer: {
+                "0%": { backgroundPosition: "0% 50%" },
+                "50%": { backgroundPosition: "100% 50%" },
+                "100%": { backgroundPosition: "0% 50%" },
+              },
+            },
+            animation: {
+              floaty: "floaty 6s ease-in-out infinite",
+              blink: "blink 4.8s ease-in-out infinite",
+              scan: "scan 2.8s ease-in-out infinite",
+              shimmer: "shimmer 10s ease-in-out infinite",
+            },
+            boxShadow: {
+              soft: "0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.08)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      html,
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .animate-floaty,
+        .animate-blink,
+        .animate-scan {
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen bg-slate-950 text-white">
+    <!-- Background -->
+    <div class="pointer-events-none fixed inset-0">
+      <div
+        class="absolute inset-0 opacity-80"
+        style="
+          background: radial-gradient(900px 520px at 15% 10%, rgba(99, 102, 241, 0.38), transparent 55%),
+            radial-gradient(820px 520px at 85% 0%, rgba(56, 189, 248, 0.28), transparent 55%),
+            radial-gradient(900px 600px at 60% 90%, rgba(236, 72, 153, 0.18), transparent 55%);
+        "
+      ></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/70 to-slate-950"></div>
+      <div class="absolute -left-24 top-24 h-56 w-56 rounded-full bg-brand-500/20 blur-3xl animate-floaty"></div>
+      <div class="absolute -right-24 top-10 h-56 w-56 rounded-full bg-sky-400/20 blur-3xl animate-floaty"></div>
+    </div>
+
+    <!-- Top bar -->
+    <nav class="relative z-10">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+        <a href="/" class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+            <i class="ph-fill ph-database text-lg text-brand-100"></i>
+          </div>
+          <div class="text-sm font-semibold tracking-tight text-white/90">
+            <span>Intellexa</span> <span class="font-normal text-white/60">AI</span>
+          </div>
+        </a>
+        <a
+          href="/"
+          class="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white/90 ring-1 ring-white/10 hover:bg-white/15"
+        >
+          <i class="ph ph-house text-base"></i>
+          Home
+        </a>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="relative z-10 mx-auto flex max-w-6xl flex-col items-stretch gap-6 px-4 pb-10 pt-6 sm:px-6 sm:pt-10 lg:flex-row lg:items-center">
+      <!-- Left: marketing -->
+      <section class="lg:w-[44%]">
+        <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 ring-1 ring-white/10">
+          <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+          Secure workspace access
+        </div>
+        <h1 class="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+          Sign in to your <span class="text-brand-100">Enterprise AI</span> workspace.
+        </h1>
+        <p class="mt-3 text-sm leading-relaxed text-white/70 sm:text-base">
+          Upload documents, query with multi-agent RAG, and track grounded sources — all in one dashboard.
+        </p>
+
+        <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 shadow-soft">
+            <div class="text-xs font-bold uppercase tracking-wider text-white/60">Grounded answers</div>
+            <div class="mt-2 text-sm font-semibold text-white/90">Confidence + citations</div>
+          </div>
+          <div class="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 shadow-soft">
+            <div class="text-xs font-bold uppercase tracking-wider text-white/60">Fast ingestion</div>
+            <div class="mt-2 text-sm font-semibold text-white/90">PDF, DOCX, JSON, MD</div>
+          </div>
+        </div>
+
+        <!-- Animated character (RAG robot) -->
+        <div class="mt-6 rounded-3xl bg-white/5 p-4 ring-1 ring-white/10 shadow-soft">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-wider text-white/60">Your RAG Assistant</div>
+              <div class="mt-1 text-sm font-semibold text-white/90">Index • Retrieve • Answer</div>
+            </div>
+            <div class="text-xs text-white/60">Online</div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-center">
+            <div class="relative w-full max-w-[420px]">
+              <div
+                class="absolute inset-0 -z-10 rounded-[32px] bg-gradient-to-r from-brand-500/25 via-sky-400/20 to-fuchsia-400/15 blur-2xl"
+              ></div>
+
+              <svg
+                viewBox="0 0 520 220"
+                class="h-auto w-full animate-floaty"
+                role="img"
+                aria-label="Animated AI character indexing documents"
+              >
+                <!-- ground -->
+                <ellipse cx="260" cy="198" rx="190" ry="18" fill="rgba(255,255,255,0.06)" />
+
+                <!-- document stack -->
+                <g transform="translate(70,78)">
+                  <rect x="0" y="70" width="110" height="62" rx="16" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" />
+                  <rect x="12" y="52" width="110" height="62" rx="16" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.14)" />
+                  <rect x="26" y="34" width="110" height="62" rx="16" fill="rgba(99,102,241,0.14)" stroke="rgba(99,102,241,0.35)" />
+                  <path d="M52 60h66" stroke="rgba(255,255,255,0.35)" stroke-width="6" stroke-linecap="round" />
+                  <path d="M52 78h52" stroke="rgba(255,255,255,0.22)" stroke-width="6" stroke-linecap="round" />
+                </g>
+
+                <!-- robot body -->
+                <g transform="translate(240,42)">
+                  <!-- antenna -->
+                  <path d="M40 10v-16" stroke="rgba(255,255,255,0.35)" stroke-width="6" stroke-linecap="round" />
+                  <circle cx="40" cy="-10" r="8" fill="rgba(56,189,248,0.55)" />
+
+                  <!-- head -->
+                  <rect x="0" y="10" width="160" height="110" rx="28" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.16)" />
+                  <rect x="20" y="34" width="120" height="54" rx="18" fill="rgba(2,6,23,0.35)" stroke="rgba(255,255,255,0.10)" />
+
+                  <!-- eyes -->
+                  <g transform="translate(40,52)">
+                    <circle cx="22" cy="10" r="10" fill="rgba(56,189,248,0.8)" />
+                    <circle cx="78" cy="10" r="10" fill="rgba(99,102,241,0.85)" />
+                    <!-- blink lids -->
+                    <g class="animate-blink" style="transform-origin: 22px 10px">
+                      <rect x="12" y="2" width="20" height="16" rx="8" fill="rgba(2,6,23,0.55)" opacity="0.9" />
+                    </g>
+                    <g class="animate-blink" style="transform-origin: 78px 10px; animation-delay: 120ms">
+                      <rect x="68" y="2" width="20" height="16" rx="8" fill="rgba(2,6,23,0.55)" opacity="0.9" />
+                    </g>
+                  </g>
+
+                  <!-- mouth -->
+                  <path d="M58 102h44" stroke="rgba(255,255,255,0.25)" stroke-width="8" stroke-linecap="round" />
+
+                  <!-- shoulders -->
+                  <rect x="-18" y="118" width="196" height="44" rx="22" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.14)" />
+                </g>
+
+                <!-- scan beam -->
+                <g class="animate-scan" opacity="0.9">
+                  <rect x="170" y="82" width="210" height="10" rx="5" fill="rgba(56,189,248,0.22)" />
+                  <rect x="170" y="80" width="210" height="14" rx="7" fill="rgba(99,102,241,0.16)" />
+                </g>
+
+                <!-- dotted retrieval path -->
+                <path
+                  d="M190 128 C 230 88, 270 88, 310 128"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.18)"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-dasharray="2 12"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: auth card -->
+      <section class="lg:w-[56%]">
+        <div class="mx-auto w-full max-w-xl rounded-3xl bg-white/6 p-2 ring-1 ring-white/10 shadow-soft backdrop-blur">
+          <!-- Tabs -->
+          <div class="relative grid grid-cols-2 rounded-2xl bg-white/5 p-1 ring-1 ring-white/10">
+            <div
+              id="tabIndicator"
+              class="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-xl bg-gradient-to-r from-brand-500/70 to-sky-400/50 shadow-soft transition-transform duration-300 ease-out"
+            ></div>
+            <button
+              id="loginTab"
+              type="button"
+              class="relative z-10 rounded-xl px-3 py-2 text-sm font-semibold text-white/90"
+            >
+              Sign in
+            </button>
+            <button
+              id="registerTab"
+              type="button"
+              class="relative z-10 rounded-xl px-3 py-2 text-sm font-semibold text-white/70 hover:text-white/90"
+            >
+              Create account
+            </button>
+          </div>
+
+          <!-- Forms viewport -->
+          <div class="mt-2 overflow-hidden rounded-2xl bg-slate-950/40 ring-1 ring-white/10">
+            <div id="formsTrack" class="grid grid-cols-2 transition-transform duration-300 ease-out" style="width:200%">
+              <!-- Login -->
+              <form id="loginForm" class="w-full p-5 sm:p-6" autocomplete="on" novalidate>
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <div class="text-lg font-bold text-white">Welcome back</div>
+                    <div class="mt-1 text-sm text-white/70">Use any email + password (demo auth).</div>
+                  </div>
+                  <span class="hidden rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70 ring-1 ring-white/10 sm:inline-flex"
+                    >v1</span
+                  >
+                </div>
+
+                <div class="mt-5 space-y-4">
+                  <div>
+                    <label class="text-xs font-semibold text-white/70">Email</label>
+                    <div class="relative mt-2">
+                      <span class="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center text-white/40">
+                        <i class="ph ph-envelope text-base"></i>
+                      </span>
+                      <input
+                        id="loginEmail"
+                        type="email"
+                        class="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-10 pr-3 text-sm text-white placeholder:text-white/35 outline-none ring-brand-500 focus:ring-2"
+                        placeholder="name@company.com"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="text-xs font-semibold text-white/70">Password</label>
+                    <div class="relative mt-2">
+                      <span class="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center text-white/40">
+                        <i class="ph ph-lock text-base"></i>
+                      </span>
+                      <input
+                        id="loginPassword"
+                        type="password"
+                        class="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/35 outline-none ring-brand-500 focus:ring-2"
+                        placeholder="••••••••"
+                        required
+                        minlength="4"
+                      />
+                      <button
+                        id="loginPwToggle"
+                        type="button"
+                        class="absolute inset-y-0 right-2 inline-flex h-full items-center justify-center rounded-xl px-3 text-white/60 hover:bg-white/10 hover:text-white"
+                        aria-label="Show password"
+                      >
+                        <i class="ph ph-eye text-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <label class="inline-flex items-center gap-2 text-sm text-white/70">
+                      <input id="rememberMe" type="checkbox" class="h-4 w-4 rounded border-white/20 bg-white/10" />
+                      Remember me
+                    </label>
+                    <button
+                      id="forgotBtn"
+                      type="button"
+                      class="text-sm font-semibold text-brand-100 hover:text-white"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
+                  <div class="rounded-2xl bg-white/5 p-3 text-sm text-white/70 ring-1 ring-white/10" id="loginError" hidden></div>
+
+                  <button
+                    id="loginSubmit"
+                    type="submit"
+                    class="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-sky-400 px-4 py-3 text-sm font-bold text-white shadow-soft transition hover:brightness-110 active:brightness-95"
+                  >
+                    <span id="loginSubmitText">Sign in</span>
+                    <span id="loginSpinner" class="hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+                    <i class="ph ph-arrow-right text-base opacity-90 transition group-hover:translate-x-0.5"></i>
+                  </button>
+                </div>
+              </form>
+
+              <!-- Register -->
+              <form id="registerForm" class="w-full p-5 sm:p-6" autocomplete="on" novalidate>
+                <div>
+                  <div class="text-lg font-bold text-white">Create your account</div>
+                  <div class="mt-1 text-sm text-white/70">This is a frontend-only demo account store.</div>
+                </div>
+
+                <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div class="sm:col-span-2">
+                    <label class="text-xs font-semibold text-white/70">Full name</label>
+                    <div class="relative mt-2">
+                      <span class="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center text-white/40">
+                        <i class="ph ph-user text-base"></i>
+                      </span>
+                      <input
+                        id="regName"
+                        type="text"
+                        class="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-10 pr-3 text-sm text-white placeholder:text-white/35 outline-none ring-brand-500 focus:ring-2"
+                        placeholder="Alex Sterling"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-2">
+                    <label class="text-xs font-semibold text-white/70">Email</label>
+                    <div class="relative mt-2">
+                      <span class="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center text-white/40">
+                        <i class="ph ph-envelope text-base"></i>
+                      </span>
+                      <input
+                        id="regEmail"
+                        type="email"
+                        class="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-10 pr-3 text-sm text-white placeholder:text-white/35 outline-none ring-brand-500 focus:ring-2"
+                        placeholder="name@company.com"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-2">
+                    <label class="text-xs font-semibold text-white/70">Password</label>
+                    <div class="relative mt-2">
+                      <span class="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center text-white/40">
+                        <i class="ph ph-lock text-base"></i>
+                      </span>
+                      <input
+                        id="regPassword"
+                        type="password"
+                        class="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/35 outline-none ring-brand-500 focus:ring-2"
+                        placeholder="Create a password"
+                        required
+                        minlength="4"
+                      />
+                      <button
+                        id="regPwToggle"
+                        type="button"
+                        class="absolute inset-y-0 right-2 inline-flex h-full items-center justify-center rounded-xl px-3 text-white/60 hover:bg-white/10 hover:text-white"
+                        aria-label="Show password"
+                      >
+                        <i class="ph ph-eye text-lg"></i>
+                      </button>
+                    </div>
+                    <div class="mt-2 text-xs text-white/50">Minimum 4 characters.</div>
+                  </div>
+                </div>
+
+                <div class="mt-4 rounded-2xl bg-white/5 p-3 text-sm text-white/70 ring-1 ring-white/10" id="regError" hidden></div>
+
+                <button
+                  id="regSubmit"
+                  type="submit"
+                  class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold text-white ring-1 ring-white/10 hover:bg-white/15"
+                >
+                  <span id="regSubmitText">Create account</span>
+                  <span id="regSpinner" class="hidden h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+                </button>
+
+                <div class="mt-4 text-center text-xs text-white/60">
+                  By continuing, you agree to demo Terms. No real authentication is performed.
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/auth.js"></script>
+  </body>
+</html>
+
