@@ -94,10 +94,17 @@ function setMode(mode) {
   if (indicator) indicator.style.transform = isReg ? "translateX(100%)" : "translateX(0%)";
   if (track) track.style.transform = isReg ? "translateX(-50%)" : "translateX(0%)";
 
-  if (loginTab) loginTab.classList.toggle("text-white/70", isReg);
-  if (loginTab) loginTab.classList.toggle("text-white/90", !isReg);
-  if (regTab) regTab.classList.toggle("text-white/70", !isReg);
-  if (regTab) regTab.classList.toggle("text-white/90", isReg);
+  const activeCls = ["text-white", "drop-shadow-sm"];
+  const inactiveCls = ["text-slate-600", "hover:text-slate-900", "dark:text-slate-400", "dark:hover:text-white"];
+
+  if (loginTab) {
+    loginTab.classList.remove(...activeCls, ...inactiveCls);
+    loginTab.classList.add(...(isReg ? inactiveCls : activeCls));
+  }
+  if (regTab) {
+    regTab.classList.remove(...activeCls, ...inactiveCls);
+    regTab.classList.add(...(isReg ? activeCls : inactiveCls));
+  }
 
   showToastBox($("loginError"), "");
   showToastBox($("regError"), "");

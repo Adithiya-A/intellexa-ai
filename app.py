@@ -138,6 +138,26 @@ def public_config():
     }
 
 
+@app.get("/markdown/{filename}")
+def get_markdown(filename: str):
+    if db is None:
+        raise HTTPException(status_code=400, detail="Vector store is empty.")
+    
+    docs = []
+    if hasattr(db, "docstore") and hasattr(db.docstore, "_dict"):
+        for doc_id, doc in db.docstore._dict.items():
+            src = str(doc.metadata.get("source", ""))
+            if src.endswith(filename) or src.endswith(filename.replace(" ", "_")):
+                docs.append(doc)
+                
+    if not docs:
+        raise HTTPException(status_code=404, detail="File markdown not found in index.")
+        
+    text = f"# {filename}\n\n" + "\n\n---\n\n".join(d.page_content for d in docs)
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(content=text, media_type="text/markdown")
+
+
 @app.post("/upload")
 async def upload(request: Request, file: UploadFile = File(...)):
     global db
@@ -251,3 +271,7 @@ def ask(request: Request, payload: AskRequest):
         _ = str(e)
     return result
 
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

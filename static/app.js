@@ -589,6 +589,15 @@ function ensureGlobalActionsMenu() {
   menu.innerHTML = `
     <button
       type="button"
+      class="flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800"
+      data-action="view-markdown"
+      role="menuitem"
+    >
+      <i class="ph ph-markdown-logo text-base text-slate-500"></i>
+      Markdown
+    </button>
+    <button
+      type="button"
       class="flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
       data-action="remove-doc"
       role="menuitem"
@@ -650,6 +659,30 @@ function wireDocsTableInteractions() {
     const clickedActionsBtn = e.target?.closest?.('button[data-action="open-actions"]');
     const clickedInsideMenu = e.target?.closest?.("#globalActionsMenu");
     if (!clickedActionsBtn && !clickedInsideMenu) closeAllDocMenus();
+  });
+
+  document.addEventListener("click", async (e) => {
+    const mdBtn = e.target?.closest?.('#globalActionsMenu button[data-action="view-markdown"]');
+    if (!mdBtn) return;
+    const menu = $("globalActionsMenu");
+    const id = menu?.dataset?.docid || "";
+    if (!id) return;
+    closeAllDocMenus();
+    const doc = loadDocs().find((d) => d.id === id);
+    if (!doc || !doc.name) return;
+    
+    try {
+      addNotification({ type: "progress", title: "Converting", message: `Extracting Markdown from ${doc.name}...` });
+      const res = await fetch("/markdown/" + encodeURIComponent(doc.name));
+      if (!res.ok) throw new Error("Could not extract markdown");
+      const text = await res.text();
+      
+      const newName = doc.name.replace(/\.[^/.]+$/, "") + ".md";
+      const file = new File([text], newName, { type: "text/markdown" });
+      await uploadFileFromPicker(file);
+    } catch (err) {
+      addNotification({ type: "error", title: "Error", message: err.message });
+    }
   });
 
   document.addEventListener("click", (e) => {
