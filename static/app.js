@@ -203,6 +203,18 @@ function applyThemeFromStorage() {
   } catch {}
 }
 
+function getAccessToken() {
+  const raw = localStorage.getItem(AUTH_KEY);
+  const s = parseJsonSafely(raw) || {};
+  return s?.access_token || "";
+}
+
+function authHeaders() {
+  const token = getAccessToken();
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
 function isSignedIn() {
   const raw = localStorage.getItem(AUTH_KEY);
   const s = parseJsonSafely(raw) || {};
@@ -807,7 +819,7 @@ async function uploadFileFromPicker(file, { statusElId, closeOnSuccess } = {}) {
 
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch("/upload", { method: "POST", body: form });
+    const res = await fetch("/upload", { method: "POST", headers: authHeaders(), body: form });
     const raw = await res.text();
     const data = parseJsonSafely(raw) || { detail: raw };
     if (!res.ok) throw new Error(data.detail || "Upload failed");
@@ -887,7 +899,7 @@ async function ask() {
     const topK = Number($("topK")?.value || loadDefaultTopK());
     const res = await fetch("/ask", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ query, top_k: topK }),
     });
     const raw = await res.text();
@@ -1115,4 +1127,3 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   await refreshHealth();
 });
-

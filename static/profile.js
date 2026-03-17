@@ -25,6 +25,19 @@ const KEYS = {
   timeRange: "intellexa_time_range_v1",
 };
 
+async function trySupabaseSignOut() {
+  try {
+    if (!window.supabase?.createClient) return;
+    const res = await fetch("/public-config");
+    const cfg = await res.json();
+    if (!cfg?.supabase_url || !cfg?.supabase_anon_key) return;
+    const sb = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+    await sb.auth.signOut();
+  } catch {
+    // ignore
+  }
+}
+
 function isSignedIn() {
   const raw = localStorage.getItem(KEYS.auth);
   const s = parseJsonSafely(raw) || {};
@@ -206,8 +219,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   $("signOutBtn")?.addEventListener("click", () => {
-    wipeLocalData([KEYS.auth]);
-    window.location.href = "/static/auth.html";
+    trySupabaseSignOut().finally(() => {
+      wipeLocalData([KEYS.auth]);
+      window.location.href = "/static/auth.html";
+    });
   });
 
   $("resetLocalBtn")?.addEventListener("click", () => {
@@ -238,4 +253,3 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   await refreshHealth();
 });
-
