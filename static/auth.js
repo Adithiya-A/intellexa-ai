@@ -94,11 +94,6 @@ function setMode(mode) {
   if (indicator) indicator.style.transform = isReg ? "translateX(100%)" : "translateX(0%)";
   if (track) track.style.transform = isReg ? "translateX(-50%)" : "translateX(0%)";
 
-  if (loginTab) loginTab.classList.toggle("text-white/70", isReg);
-  if (loginTab) loginTab.classList.toggle("text-white/90", !isReg);
-  if (regTab) regTab.classList.toggle("text-white/70", !isReg);
-  if (regTab) regTab.classList.toggle("text-white/90", isReg);
-
   showToastBox($("loginError"), "");
   showToastBox($("regError"), "");
 }
