@@ -37,11 +37,17 @@ static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.isdir(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+assets_dir = os.path.join(os.path.dirname(__file__), "assets")
+cursor_assets_dir = "/home/adithiya/.cursor/projects/mnt-c-Users-Adithiya-Projects-intellexa-ai/assets"
+assets_mount_dir = assets_dir if os.path.isdir(assets_dir) else cursor_assets_dir
+if os.path.isdir(assets_mount_dir):
+    app.mount("/assets", StaticFiles(directory=assets_mount_dir), name="assets")
+
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    # Ensure frontend always receives JSON (avoid "Unexpected token" in browser).
-    return JSONResponse(status_code=500, content={"detail": f"Internal Server Error: {exc}"})
+    # Production-style handler: don't leak internal exception details.
+    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 
 class AskRequest(BaseModel):
@@ -123,6 +129,14 @@ def index():
     return FileResponse(index_path)
 
 
+@app.get("/favicon.ico")
+def favicon():
+    ico_path = os.path.join(os.path.dirname(__file__), "Intellexa_AI-cpy-removebg.png")
+    if not os.path.isfile(ico_path):
+        raise HTTPException(status_code=404, detail="Icon not found.")
+    return FileResponse(ico_path)
+
+
 @app.get("/health")
 def health():
     sb = get_supabase_config()
@@ -160,18 +174,13 @@ async def upload(request: Request, file: UploadFile = File(...)):
         if decoded:
             uid = decoded.get("uid")
             upsert_user(decoded)
-    except ValueError as e:
-        # Don't block ingestion if auth fails (frontend can still upload).
-        # We'll store as anonymous and surface the error in the response.
+    except ValueError:
+        # In production, treat invalid/missing auth as anonymous
         decoded = None
         uid = None
-        auth_error = str(e)
 
     upload_id = ""
     storage_info: Dict[str, Any] = {"enabled": False, "bucket": None, "path": None}
-    supabase_errors: Dict[str, Any] = {}
-    if "auth_error" in locals():
-        supabase_errors["auth_error"] = auth_error
 
     with tempfile.TemporaryDirectory() as tmpdir:
         file_path = os.path.join(tmpdir, file.filename)
@@ -190,7 +199,6 @@ async def upload(request: Request, file: UploadFile = File(...)):
         except Exception as e:
             # Storage is optional; ingestion can still work without it.
             storage_info = {"enabled": False, "bucket": None, "path": None}
-            supabase_errors["storage_error"] = str(e)
 
         try:
             chunks = load_and_chunk_file(file_path)
@@ -205,7 +213,7 @@ async def upload(request: Request, file: UploadFile = File(...)):
         except RuntimeError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-    # Save metadata in Supabase Postgres (if enabled)
+    # Save metadata in Supabase Postgres (if enabled). Errors are silenced in production response.
     try:
         upload_id = save_upload_metadata(
             uid=uid,
@@ -215,9 +223,8 @@ async def upload(request: Request, file: UploadFile = File(...)):
             storage_path=storage_info.get("path"),
             storage_bucket=storage_info.get("bucket"),
         )
-    except Exception as e:
+    except Exception:
         upload_id = ""
-        supabase_errors["db_error"] = str(e)
 
     return {
         "ok": True,
@@ -225,7 +232,6 @@ async def upload(request: Request, file: UploadFile = File(...)):
         "filetype": ext,
         "upload_id": upload_id,
         "storage": storage_info,
-        "supabase": {"ok": not bool(supabase_errors), **supabase_errors},
     }
 
 
@@ -238,16 +244,16 @@ def ask(request: Request, payload: AskRequest):
         if decoded:
             uid = decoded.get("uid")
             upsert_user(decoded)
-    except ValueError as e:
+    except ValueError:
+        # Treat invalid/missing auth as anonymous in production.
         decoded = None
         uid = None
 
     result = run_pipeline(payload.query, top_k=payload.top_k)
     try:
         save_chat_turn(uid=uid, query=payload.query, response=result)
-    except Exception as e:
+    except Exception:
         # Don't fail the user-facing answer path if logging fails.
-        # The global exception handler will still return JSON if this unexpectedly raises.
-        _ = str(e)
+        pass
     return result
 
