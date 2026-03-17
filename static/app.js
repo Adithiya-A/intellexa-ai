@@ -20,6 +20,17 @@ function nowIso() {
 const STORAGE_KEY = "intellexa_docs_v1";
 const PROFILE_KEY = "intellexa_profile_v1";
 const AUTH_KEY = "intellexa_auth_v1";
+const THEME_KEY = "intellexa_theme_v1";
+
+function applyThemeFromStorage() {
+  try {
+    const c = localStorage.getItem(THEME_KEY) || "system";
+    const dark =
+      c === "dark" ||
+      (c === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", dark);
+  } catch {}
+}
 
 function isSignedIn() {
   const raw = localStorage.getItem(AUTH_KEY);
@@ -243,8 +254,8 @@ function renderDocsTable(activeTab) {
           <i class="ph ${fileIcon} text-lg"></i>
         </div>
         <div class="min-w-0">
-          <div class="truncate font-semibold text-slate-900">${escapeHtml(doc.name || "Untitled")}</div>
-          <div class="mt-0.5 text-xs text-slate-500">ID: ${escapeHtml(doc.short_id || "—")}</div>
+          <div class="truncate font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(doc.name || "Untitled")}</div>
+          <div class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">ID: ${escapeHtml(doc.short_id || "—")}</div>
         </div>
       </div>
     `;
@@ -278,16 +289,16 @@ function renderDocsTable(activeTab) {
     const sizeTd = document.createElement("td");
     sizeTd.className = "py-4 pr-6";
     sizeTd.innerHTML = `
-      <div class="text-sm font-semibold text-slate-900">${escapeHtml(formatBytes(doc.size_bytes))}</div>
-      <div class="mt-0.5 text-xs text-slate-500">${escapeHtml(doc.mime || prettyType(doc.type))}</div>
+      <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(formatBytes(doc.size_bytes))}</div>
+      <div class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">${escapeHtml(doc.mime || prettyType(doc.type))}</div>
     `;
 
     const dateTd = document.createElement("td");
     dateTd.className = "py-4 pr-6";
     const dt = formatDateTwoLine(doc.created_at);
     dateTd.innerHTML = `
-      <div class="text-sm font-semibold text-slate-900">${escapeHtml(dt.date)}</div>
-      <div class="mt-0.5 text-xs text-slate-500">${escapeHtml(dt.time)}</div>
+      <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(dt.date)}</div>
+      <div class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">${escapeHtml(dt.time)}</div>
     `;
 
     const actionsTd = document.createElement("td");
@@ -332,22 +343,22 @@ function ensureGlobalFilterMenu() {
   const m = document.createElement("div");
   m.id = "globalFilterMenu";
   m.className =
-    "fixed z-[80] hidden w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg";
+    "fixed z-[80] hidden w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900";
   m.innerHTML = `
-    <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">Date added</div>
-    <button type="button" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-range="24h">
+    <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Date added</div>
+    <button type="button" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800" data-range="24h">
       <span>Last 24 Hours</span>
       <span class="hidden text-brand-600" data-check="24h"><i class="ph ph-check text-base"></i></span>
     </button>
-    <button type="button" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-range="7d">
+    <button type="button" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800" data-range="7d">
       <span>Last 7 Days</span>
       <span class="hidden text-brand-600" data-check="7d"><i class="ph ph-check text-base"></i></span>
     </button>
-    <button type="button" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-range="30d">
+    <button type="button" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800" data-range="30d">
       <span>Last 30 Days</span>
       <span class="hidden text-brand-600" data-check="30d"><i class="ph ph-check text-base"></i></span>
     </button>
-    <button type="button" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" data-range="all">
+    <button type="button" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800" data-range="all">
       <span>All time</span>
       <span class="hidden text-brand-600" data-check="all"><i class="ph ph-check text-base"></i></span>
     </button>
@@ -391,11 +402,11 @@ function ensureGlobalActionsMenu() {
   const menu = document.createElement("div");
   menu.id = "globalActionsMenu";
   menu.className =
-    "fixed z-[80] hidden w-44 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg";
+    "fixed z-[80] hidden w-44 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900";
   menu.innerHTML = `
     <button
       type="button"
-      class="flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+      class="flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
       data-action="remove-doc"
       role="menuitem"
     >
@@ -764,6 +775,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   ensureGlobalActionsMenu();
   ensureGlobalFilterMenu();
   applyAuthUI();
+  applyThemeFromStorage();
   updateCards();
   renderSearchOptions();
   setSearchClearVisible();
@@ -863,6 +875,10 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   window.addEventListener("storage", (e) => {
     if (e.key === AUTH_KEY || e.key === PROFILE_KEY) applyAuthUI();
+    if (e.key === THEME_KEY) applyThemeFromStorage();
+  });
+  window.matchMedia?.("(prefers-color-scheme: dark)")?.addEventListener?.("change", () => {
+    if ((localStorage.getItem(THEME_KEY) || "system") === "system") applyThemeFromStorage();
   });
 
   await refreshHealth();
