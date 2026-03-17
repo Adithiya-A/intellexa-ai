@@ -19,7 +19,15 @@ GEMINI_MODEL = get_env("GEMINI_MODEL", "models/gemini-flash-latest")
 # This default is widely available across accounts/regions.
 GEMINI_EMBED_MODEL = get_env("GEMINI_EMBED_MODEL", "models/gemini-embedding-001")
 
-FAISS_DIR = get_env("FAISS_DIR", os.path.join("data", "faiss_index"))
 CHUNK_SIZE = int(get_env("CHUNK_SIZE", "500") or "500")
 CHUNK_OVERLAP = int(get_env("CHUNK_OVERLAP", "50") or "50")
 TOP_K = int(get_env("TOP_K", "3") or "3")
+
+
+# FAISS index directory:
+# - Locally: default to a writable "data" folder
+# - On Vercel: root filesystem is read-only, but /tmp is writable (non-persistent)
+if os.getenv("VERCEL"):
+    FAISS_DIR = get_env("FAISS_DIR", "/tmp/intellexa-faiss")
+else:
+    FAISS_DIR = get_env("FAISS_DIR", "data")

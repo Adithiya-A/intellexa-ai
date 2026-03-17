@@ -6,6 +6,7 @@ import tempfile
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -28,10 +29,19 @@ from utils.supabase_client import (
     verify_bearer_token,
 )
 from utils.serialize import doc_to_dict
-from utils.settings import FAISS_DIR, TOP_K
+from utils.settings import TOP_K
 
 
 app = FastAPI(title="Intellexa Multi-Agent RAG", version="0.1.0")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.isdir(static_dir):
@@ -140,7 +150,7 @@ def favicon():
 @app.get("/health")
 def health():
     sb = get_supabase_config()
-    return {"ok": True, "has_index": os.path.isdir(FAISS_DIR), "supabase_enabled": sb.enabled}
+    return {"ok": True, "has_index": db is not None, "supabase_enabled": sb.enabled}
 
 
 @app.get("/public-config")
