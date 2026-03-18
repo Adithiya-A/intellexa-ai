@@ -147,6 +147,14 @@ def favicon():
     return FileResponse(ico_path)
 
 
+@app.get("/baymax.png")
+def baymax_icon():
+    icon_path = os.path.join(os.path.dirname(__file__), "baymax.png")
+    if not os.path.isfile(icon_path):
+        raise HTTPException(status_code=404, detail="Icon not found.")
+    return FileResponse(icon_path)
+
+
 @app.get("/health")
 def health():
     sb = get_supabase_config()
