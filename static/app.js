@@ -585,15 +585,27 @@ function ensureGlobalActionsMenu() {
   const menu = document.createElement("div");
   menu.id = "globalActionsMenu";
   menu.className =
-    "fixed z-[80] hidden w-44 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900";
+    "fixed z-[80] hidden w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900";
   menu.innerHTML = `
     <button
       type="button"
       class="flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+      data-action="markdown-doc"
+      role="menuitem"
+    >
+      <i class="ph ph-text-align-left text-base text-slate-500"></i>
+      <span class="flex-1 text-left">Markdown</span>
+      <span data-markdown-active class="text-emerald-600 hidden">
+        <i class="ph ph-check text-base"></i>
+      </span>
+    </button>
+    <button
+      type="button"
+      class="flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-slate-800"
       data-action="remove-doc"
       role="menuitem"
     >
-      <i class="ph ph-trash text-base text-slate-500"></i>
+      <i class="ph ph-trash text-base"></i>
       Remove
     </button>
   `;
@@ -604,6 +616,20 @@ function openGlobalActionsMenu(anchorEl, docId) {
   const menu = $("globalActionsMenu");
   if (!menu || !anchorEl) return;
   menu.dataset.docid = docId || "";
+
+  // Update markdown toggle symbol based on current doc type
+  try {
+    const docs = loadDocs();
+    const doc = docs.find((d) => d.id === docId);
+    const isMarkdown = doc?.type === "markdown";
+    const btn = menu.querySelector('button[data-action="markdown-doc"]');
+    const badge = btn?.querySelector?.("[data-markdown-active]");
+    if (badge) {
+      badge.classList.toggle("hidden", !isMarkdown);
+    }
+  } catch {
+    // best-effort; ignore UI update errors
+  }
 
   const r = anchorEl.getBoundingClientRect();
   const margin = 8;
@@ -653,18 +679,42 @@ function wireDocsTableInteractions() {
   });
 
   document.addEventListener("click", (e) => {
-    const removeBtn = e.target?.closest?.('#globalActionsMenu button[data-action="remove-doc"]');
-    if (!removeBtn) return;
     const menu = $("globalActionsMenu");
+    if (!menu) return;
+    const markdownBtn = e.target?.closest?.('#globalActionsMenu button[data-action="markdown-doc"]');
+    const removeBtn = e.target?.closest?.('#globalActionsMenu button[data-action="remove-doc"]');
+    if (!markdownBtn && !removeBtn) return;
     const id = menu?.dataset?.docid || "";
     if (!id) return;
     closeAllDocMenus();
-    const next = loadDocs().filter((d) => d.id !== id);
-    saveDocs(next);
-    updateCards();
-    renderSearchOptions();
-    setSearchClearVisible();
-    renderDocsTable(getActiveTab());
+
+    if (markdownBtn) {
+      const next = loadDocs().map((d) => {
+        if (d.id !== id) return d;
+        const isMarkdown = d.type === "markdown";
+        if (isMarkdown) {
+          const restoredType = d.original_type || "other";
+          const { original_type, ...rest } = d;
+          return { ...rest, type: restoredType };
+        }
+        return { ...d, original_type: d.original_type || d.type, type: "markdown" };
+      });
+      saveDocs(next);
+      updateCards();
+      renderSearchOptions();
+      setSearchClearVisible();
+      renderDocsTable(getActiveTab());
+      return;
+    }
+
+    if (removeBtn) {
+      const next = loadDocs().filter((d) => d.id !== id);
+      saveDocs(next);
+      updateCards();
+      renderSearchOptions();
+      setSearchClearVisible();
+      renderDocsTable(getActiveTab());
+    }
   });
 
   window.addEventListener("keydown", (e) => {
@@ -677,7 +727,8 @@ function wireDocsTableInteractions() {
 
 function updateCards() {
   const docs = loadDocs();
-  safeText($("totalDocs"), String(docs.length));
+  const successful = docs.filter((d) => d.status !== "failed");
+  safeText($("totalDocs"), String(successful.length));
   safeText($("docsDelta"), docs.length ? "Indexed documents" : "Ready");
 }
 
